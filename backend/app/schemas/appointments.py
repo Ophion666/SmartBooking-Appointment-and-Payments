@@ -9,11 +9,12 @@ class AppointmentStatus(str, Enum):
 
 class AppointmentCreate(BaseModel):
 
-    user_id: int
+    user_name: str
+    user_phone: str
     master_id: int
     service_id: int
     start_datetime: datetime
-    status: AppointmentStatus
+    
 
 class AppointmentResponse(BaseModel):
 
@@ -21,6 +22,7 @@ class AppointmentResponse(BaseModel):
     user_id: int
     master_id: int
     service_id: int
+    cancel_token: str
     start_datetime: datetime
     status: AppointmentStatus
 

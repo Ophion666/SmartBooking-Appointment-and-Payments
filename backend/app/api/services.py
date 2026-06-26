@@ -3,11 +3,13 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas import services
 from app.crud import crud_service
+from app.models.users import User
+from app.services.current_admin import get_current_admin
 
 router = APIRouter(prefix="/service", tags=["Services"])
 
 @router.post("/create_service", response_model=services.ServiceResponse)
-def post_create_service(service: services.ServiceCreate, db: Session = Depends(get_db)):
+def post_create_service(service: services.ServiceCreate, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
     db_service = crud_service.get_service_by_name(db, name = service.name)
     if db_service:
         raise HTTPException(status_code=400, detail="Service already registered")

@@ -5,18 +5,6 @@ from datetime import date
 from sqlalchemy import cast, Date
 
 
-def create_appointment(db: Session, appoint: AppointmentCreate):
-    db_appoint = Appointment(
-        user_id = appoint.user_id,
-        master_id = appoint.master_id,
-        service_id = appoint.service_id,
-        start_datetime = appoint.start_datetime,
-        status = appoint.status
-    )
-    db.add(db_appoint)
-    db.commit()
-    db.refresh(db_appoint)
-    return db_appoint
 
 def get_appointment_by_id(db: Session, appointment_id: int):
     return db.query(Appointment).filter(Appointment.id == appointment_id).first()
@@ -34,3 +22,5 @@ def get_appointments_by_master_and_date(db: Session, master_id: int, target_date
     ).all()
 
 
+def get_appoint_by_token(db: Session, token: str):
+    return db.query(Appointment).filter(Appointment.cancel_token == token).first()

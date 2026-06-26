@@ -4,13 +4,15 @@ from app.db.session import get_db
 from app.schemas import schedule
 from app.crud import crud_schedule
 from app.crud.crud_master import get_master_by_id
+from app.models.users import User
+from app.services.current_admin import get_current_admin
 
 
 
 router = APIRouter(prefix="/schedule", tags=["Schedules"])
 
 @router.post("/create_schedule", response_model=schedule.ScheduleResponse)
-def post_create_shedule(schedule: schedule.ScheduleCreate, db: Session = Depends(get_db)):
+def post_create_shedule(schedule: schedule.ScheduleCreate, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
   
     check_master = get_master_by_id(db, master_id = schedule.master_id )
     if not check_master:

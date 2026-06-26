@@ -1,5 +1,5 @@
 from app.db.session import Base
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 
 
 
@@ -12,3 +12,7 @@ class User(Base):
     name = Column(String)
 
     phone = Column(String, unique=True, index=True)
+
+    hashed_password = Column(String, nullable=True) 
+
+    is_admin = Column(Boolean, default=False)

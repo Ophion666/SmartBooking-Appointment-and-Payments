@@ -17,3 +17,4 @@ def get_all_services(db: Session, skip: int = 0, limit: int = 100):
 
 def get_service_by_id(db: Session, service_id: int):
     return db.query(Service).filter(Service.id == service_id).first()
+
