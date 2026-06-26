@@ -13,8 +13,15 @@ def get_service_by_name(db: Session, name: int):
     return db.query(Service).filter(Service.name == name).first()
 
 def get_all_services(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Service).offset(skip).limit(limit).all()
+    return db.query(Service).filter(Service.is_active == True).offset(skip).limit(limit).all()
 
 def get_service_by_id(db: Session, service_id: int):
     return db.query(Service).filter(Service.id == service_id).first()
 
+def delete_service(db: Session, service_id: int):
+    db_service = get_service_by_id(db, service_id=service_id)
+    if db_service:
+        db_service.is_active = False
+        db.commit()
+        db.refresh(db_service)
+    return db_service

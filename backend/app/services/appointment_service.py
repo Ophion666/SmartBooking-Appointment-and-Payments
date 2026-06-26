@@ -21,6 +21,9 @@ def create_new_appointment(db: Session, appoint: AppointmentCreate):
 
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
+    
+    if service.is_active == False:
+        raise HTTPException(status_code=404, detail="Service not found")
 
     slots_needed = math.ceil(service.duration_minutes / 30)
     requested_slots = set()

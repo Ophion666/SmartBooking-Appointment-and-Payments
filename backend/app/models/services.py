@@ -1,5 +1,5 @@
 from app.db.session import Base
-from sqlalchemy import Column, Integer, Float, String
+from sqlalchemy import Column, Integer, Float, String, Boolean
 
 
 class Service(Base):
@@ -13,3 +13,5 @@ class Service(Base):
     duration_minutes = Column(Integer)
 
     price = Column(Float)
+
+    is_active = Column(Boolean, default=True)
