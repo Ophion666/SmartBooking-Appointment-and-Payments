@@ -7,6 +7,7 @@ import math
 from app.schemas.schedule import DayOfWeek
 from sqlalchemy.orm import Session
 
+
 def get_available_slots(master_id: int,service_id: int , target_date: date, db: Session):
 
     service = crud_service.get_service_by_id(db, service_id=service_id)

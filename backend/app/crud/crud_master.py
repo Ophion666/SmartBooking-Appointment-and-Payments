@@ -16,4 +16,20 @@ def get_master_by_phone(db: Session, phone: str):
     return db.query(Master).filter(Master.phone == phone).first()
 
 def get_all_masters(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Master).offset(skip).limit(limit).all()
+    return db.query(Master).filter(Master.is_active == True).offset(skip).limit(limit).all()
+
+def deactivate_master(db: Session, master_id: int):
+    db_master = get_master_by_id(db, master_id=master_id)
+    if db_master:
+        db_master.is_active = False
+        db.commit()
+        db.refresh(db_master)
+    return db_master
+
+def activate_master(db: Session, master_id: int):
+    db_master = get_master_by_id(db, master_id=master_id)
+    if db_master:
+        db_master.is_active = True
+        db.commit()
+        db.refresh(db_master)
+    return db_master

@@ -13,3 +13,13 @@ def delete_services(service_id: int, db: Session, current_admin: User):
         raise HTTPException(status_code=404, detail="Service not found")
     
     return {"message": "Success"}
+
+
+def activate_services(service_id: int, db: Session, current_admin: User):
+
+    activate_services = crud_service.activate_service(db, service_id=service_id)
+
+    if not activate_services:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    return {"message": "Success"}

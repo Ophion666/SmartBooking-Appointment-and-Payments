@@ -1,7 +1,7 @@
 from app.db.session import Base
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.orm import relationship
-
+from app.models.master_service import master_service_association
 
 class Master(Base):
 
@@ -15,4 +15,8 @@ class Master(Base):
 
     specialization = Column(String)
 
+    is_active = Column(Boolean, default=True)
+
     schedules = relationship("Schedule", back_populates="master")
+
+    services = relationship("Service", secondary=master_service_association, back_populates="masters")

@@ -13,10 +13,10 @@ def available_slots(master_id: int,service_id: int , target_date: date, db: Sess
     return booking_service.get_available_slots(db = db, master_id=master_id, service_id=service_id, target_date=target_date)
     
 
-    
-
 @router.post("/cancel/{token}")
 def cancel_appointment_endpoint(token: str, db: Session = Depends(get_db)):
     return appointment_service.cancel_appointment(db=db, token=token)
+
+
 
 

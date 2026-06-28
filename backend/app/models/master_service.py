@@ -4,6 +4,6 @@ from app.db.session import Base
 master_service_association = Table(
     "master_service",
     Base.metadata,
-    Column("master_id", Integer, ForeignKey("master.id"), primary_key=True),
+    Column("master_id", Integer, ForeignKey("masters.id"), primary_key=True),
     Column("service_id", Integer, ForeignKey("services.id"), primary_key=True)
 )

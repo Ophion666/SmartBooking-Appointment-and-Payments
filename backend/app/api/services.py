@@ -23,3 +23,7 @@ def get_services (db: Session = Depends(get_db)):
 @router.delete("/{service_id}")
 def delete_service_endpoint(service_id: int, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
     return service_service.delete_services(db=db, service_id=service_id, current_admin=current_admin)
+
+@router.put("/{service_id}")
+def activate_service_endpoint(service_id: int, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
+    return service_service.activate_services(db=db, service_id=service_id, current_admin=current_admin)

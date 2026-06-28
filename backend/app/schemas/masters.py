@@ -1,5 +1,12 @@
 from pydantic import BaseModel, ConfigDict
 
+class ServiceShortInfo(BaseModel):
+    id: int
+    name: str
+    price: float
+    duration_minutes: int
+    model_config = ConfigDict(from_attributes=True)
+
 
 class MasterCreate(BaseModel):
 
@@ -13,5 +20,5 @@ class MasterResponse(BaseModel):
     name: str
     specialization: str
     phone: str
-
+    services: list[ServiceShortInfo] = [] 
     model_config = ConfigDict(from_attributes=True)

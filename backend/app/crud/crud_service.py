@@ -25,3 +25,11 @@ def delete_service(db: Session, service_id: int):
         db.commit()
         db.refresh(db_service)
     return db_service
+
+def activate_service(db: Session, service_id: int):
+    db_service = get_service_by_id(db, service_id=service_id)
+    if db_service:
+        db_service.is_active = True
+        db.commit()
+        db.refresh(db_service)
+    return db_service

@@ -2,11 +2,14 @@ import math
 from datetime import timedelta
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from app.crud import crud_appointment, crud_service, crud_user
+from app.crud import crud_appointment, crud_service, crud_user, crud_master
 from app.schemas.appointments import AppointmentCreate, AppointmentStatus
 from app.schemas.users import UserCreate
-
-
+import time
+from app.db.session import SessionLocal
+from app.models.appointments import Appointment
+from fastapi import BackgroundTasks
+from app.services import appointment_service
 
 def create_new_appointment(db: Session, appoint: AppointmentCreate):
 
@@ -22,8 +25,19 @@ def create_new_appointment(db: Session, appoint: AppointmentCreate):
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
     
+    master = crud_master.get_master_by_id(db, master_id= appoint.master_id)
+
+    if master.is_active == False:
+        raise HTTPException(status_code=404, detail="Master not found")
+
+    if not service in master.services:
+        raise HTTPException(status_code=400, detail="Mater doesn't do it")
+
+    
     if service.is_active == False:
         raise HTTPException(status_code=404, detail="Service not found")
+    
+    
 
     slots_needed = math.ceil(service.duration_minutes / 30)
     requested_slots = set()
@@ -79,4 +93,35 @@ def cancel_appointment(db: Session, token: str):
     db.refresh(found_appoint)
     return found_appoint
 
+def cancel_appointment_admin(db: Session, appointment_id: str):
+    found_appoint = crud_appointment.get_appointment_by_id(db, appointment_id=appointment_id)
 
+    if not found_appoint:
+        raise HTTPException(404, "Invalid token or appointment not found")
+    
+    if found_appoint.status == "canceled":
+        raise HTTPException(400, "Appointment already cancel")
+    
+    found_appoint.status = AppointmentStatus.cancelled
+
+    db.commit()
+    db.refresh(found_appoint)
+    return found_appoint
+
+
+def cancel_unpaid_appointment_task(appointment_id: int):
+    time.sleep(60)
+
+    db = SessionLocal()
+
+    try:
+
+        appt = db.query(Appointment).filter(Appointment.id == appointment_id).first()
+
+        if appt and appt.status == AppointmentStatus.pending_payment:
+            appt.status = AppointmentStatus.cancelled
+            db.commit()
+            print(f"[Background Task] Appointment {appointment_id} canceled. No payment")
+
+    finally:
+        db.close()
