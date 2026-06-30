@@ -81,19 +81,24 @@ async def stripe_webhook(request: Request, db: Session):
 
         if session.metadata:
             appointment_id_str = session.metadata.appointment_id
-        else:
-            appointment_id_str = None
-
-
-        if appointment_id_str:
             appointment_id = int(appointment_id_str)
             appointment = crud_appointment.get_appointment_by_id(db, appointment_id=appointment_id)
 
-            if appointment and appointment.status == AppointmentStatus.pending_payment:
+
+
+            if appointment.status == AppointmentStatus.pending_payment:
                 appointment.status = AppointmentStatus.confirmed
                 db.commit()
                 print(f"========================")
                 print(f"Appointment {appointment_id} success!")
                 print(f"========================")
+
+            elif appointment.status == AppointmentStatus.cancelled:
+
+                payment_intent_id = session.payment_intent
+                if payment_intent_id:
+
+                    stripe.Refund.create(payment_intent=payment_intent_id)
+                    print(f"Payment after timeout. Payment refunded for appointment {appointment_id}")
 
     return {"status": "success"}
