@@ -1,11 +1,12 @@
 import os
 import stripe
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from sqlalchemy.orm import Session
 from app.crud import crud_appointment
 from app.schemas.appointments import AppointmentStatus
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
 
 def create_checkout_session(appointment_id: int, db: Session):
 
@@ -55,3 +56,44 @@ def create_checkout_session(appointment_id: int, db: Session):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+async def stripe_webhook(request: Request, db: Session):
+
+    payload = await request.body()
+
+    sig_header = request.headers.get("Stripe-Signature")
+
+    try:
+
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    
+    except stripe.error.SignatureVerificationError as e:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+
+
+        if session.metadata:
+            appointment_id_str = session.metadata.appointment_id
+        else:
+            appointment_id_str = None
+
+
+        if appointment_id_str:
+            appointment_id = int(appointment_id_str)
+            appointment = crud_appointment.get_appointment_by_id(db, appointment_id=appointment_id)
+
+            if appointment and appointment.status == AppointmentStatus.pending_payment:
+                appointment.status = AppointmentStatus.confirmed
+                db.commit()
+                print(f"========================")
+                print(f"Appointment {appointment_id} success!")
+                print(f"========================")
+
+    return {"status": "success"}

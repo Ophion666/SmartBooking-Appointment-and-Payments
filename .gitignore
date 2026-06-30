@@ -1,7 +1,7 @@
 backend/venv/         
 backend/__pycache__/   
 backend/.env           
-
+backend/stripe.exe
 
 .DS_Store
 Thumbs.db

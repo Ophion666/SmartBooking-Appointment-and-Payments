@@ -8,8 +8,6 @@ from app.schemas.users import UserCreate
 import time
 from app.db.session import SessionLocal
 from app.models.appointments import Appointment
-from fastapi import BackgroundTasks
-from app.services import appointment_service
 
 def create_new_appointment(db: Session, appoint: AppointmentCreate):
 
@@ -110,7 +108,7 @@ def cancel_appointment_admin(db: Session, appointment_id: str):
 
 
 def cancel_unpaid_appointment_task(appointment_id: int):
-    time.sleep(60)
+    time.sleep(600)
 
     db = SessionLocal()
 
