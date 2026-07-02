@@ -1,30 +1,10 @@
-version: '3.8'
+
 
 services:
   
-  db:
-    image: postgres:15
+  redis:
+    image: redis:alpine
+    container_name: smart_booking_redis
+    ports:
+      - "6379:6379"
     restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD:   # Password eml
-      POSTGRES_DB: smart_booking_db
-    ports:
-      - "5432:5432" 
-    volumes:
-      - smart_booking_db_data:/var/lib/postgresql/data 
-
-
-  backend:
-    
-    
-    build: ./backend 
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db 
-    env_file:
-      - ./backend/.env 
-
-volumes:
-  coinflow_db_data: 

@@ -22,6 +22,8 @@ class Appointment(Base):
     status = Column(sqlalchemy_Enum(AppointmentStatus))
 
     cancel_token = Column(String, unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    
+    stripe_payment_id = Column(String, nullable=True)
 
     user = relationship("User", backref="appointments")
 

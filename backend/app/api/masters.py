@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas import masters
-from app.crud import crud_master
+from app.crud import crud_master, crud_appointment
 from app.models.users import User
 from app.services.current_admin import get_current_admin
 from app.services import master_service
@@ -33,3 +33,7 @@ def deactivate_master_endpoint(master_id: int, db : Session = Depends(get_db), c
 @router.put("/{master_id}")
 def activate_master_endpoint(master_id: int, db : Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
     return master_service.activate_masters(db=db, master_id=master_id, current_admin=current_admin)
+
+@router.get("/masters/{master_id}/appointments")
+def get_master_appointment_endpoint(master_id: int, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
+    return crud_appointment.get_master_appointments(db=db, master_id=master_id)

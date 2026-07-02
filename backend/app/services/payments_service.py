@@ -4,6 +4,8 @@ from fastapi import HTTPException, Request
 from sqlalchemy.orm import Session
 from app.crud import crud_appointment
 from app.schemas.appointments import AppointmentStatus
+from app.api.worker import send_telegram_task
+from app.services.appointment_service import active_timers
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
@@ -78,27 +80,38 @@ async def stripe_webhook(request: Request, db: Session):
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
 
-
         if session.metadata:
             appointment_id_str = session.metadata.appointment_id
             appointment_id = int(appointment_id_str)
             appointment = crud_appointment.get_appointment_by_id(db, appointment_id=appointment_id)
 
+            if appointment:
+                payment_intent_id = getattr(session, "payment_intent", None)
 
 
-            if appointment.status == AppointmentStatus.pending_payment:
-                appointment.status = AppointmentStatus.confirmed
-                db.commit()
-                print(f"========================")
-                print(f"Appointment {appointment_id} success!")
-                print(f"========================")
+                if appointment.status == AppointmentStatus.pending_payment:
+                    appointment.status = AppointmentStatus.confirmed
+                    appointment.stripe_payment_id = payment_intent_id
+                    db.commit()
 
-            elif appointment.status == AppointmentStatus.cancelled:
+                    if appointment_id in active_timers:
+                        active_timers[appointment_id].set()
 
-                payment_intent_id = session.payment_intent
-                if payment_intent_id:
+                    cancel_url = f"http://localhost:8000/booking/cancel/{appointment.cancel_token}"
 
-                    stripe.Refund.create(payment_intent=payment_intent_id)
-                    print(f"Payment after timeout. Payment refunded for appointment {appointment_id}")
+                    text = (
+                        f"<b>PAYMENT SUCCESS</b>\n"
+                        f"appointment #{appointment_id} confirmed"
+                        f"<b>Url for cancel</b>\n{cancel_url}"
+                    )
+                    send_telegram_task.delay(text)
+
+                elif appointment.status == AppointmentStatus.cancelled:
+                    
+                    payment_intent_id = session.payment_intent
+
+                    if payment_intent_id:
+
+                        stripe.Refund.create(payment_intent=payment_intent_id)
 
     return {"status": "success"}

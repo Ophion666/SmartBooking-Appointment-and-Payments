@@ -54,6 +54,10 @@ def get_available_slots(master_id: int,service_id: int , target_date: date, db: 
 
     while current_time + slot_duration <= end_time:
 
+        if current_time < datetime.now(): 
+            current_time += slot_duration
+            continue
+
         is_free = True
 
         for i in range(slots_needed):
