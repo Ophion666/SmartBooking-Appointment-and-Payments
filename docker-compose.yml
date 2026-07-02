@@ -1,10 +1,46 @@
-
+version: '3.8'
 
 services:
+  
+  db:
+    image: postgres:15-alpine
+    container_name: smart_booking_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: autohelper_db
+    ports:
+      - "5432:5432"
+
   
   redis:
     image: redis:alpine
     container_name: smart_booking_redis
+    restart: always
     ports:
       - "6379:6379"
+
+  
+  backend:
+    build: .  
+    container_name: smart_booking_backend
     restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env  
+    depends_on:
+      - db
+      - redis
+
+  
+  stripe-cli:
+    image: stripe/stripe-cli
+    container_name: smart_booking_stripe
+    restart: always
+    command: "listen --api-key ${STRIPE_SECRET_KEY} --forward-to http://backend:8000/payments/webhook"
+    env_file:
+      - .env
+    depends_on:
+      - backend
