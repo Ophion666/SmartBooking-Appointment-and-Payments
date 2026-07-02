@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordRequestForm
 from app.services import admin_service
-from app.services.current_admin import get_current_admin
-from app.models.users import User
+
 
 
 router = APIRouter(prefix="/admin", tags=["Admin"])

@@ -1,7 +1,7 @@
 from jose import jwt, JWTError
-from app.core.security import SECRET_KEY, ALGORITHM, verify_password, create_access_token
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi import APIRouter, Depends, HTTPException, status
+from app.core.security import SECRET_KEY, ALGORITHM
+from fastapi.security import OAuth2PasswordBearer
+from fastapi import  Depends, HTTPException, status
 from app.db.session import get_db
 from sqlalchemy.orm import Session
 from app.crud import crud_user
