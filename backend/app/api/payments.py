@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.services import payments_service
+
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
 @router.post("/create-checkout-session/{appointment_id}")

@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from app.models.appointments import Appointment
 from app.schemas.appointments import AppointmentStatus
 from datetime import date
-from sqlalchemy import cast, Date
+from datetime import datetime, time, timedelta
 from sqlalchemy import asc
 
 
@@ -15,10 +15,14 @@ def get_all_appointments(db: Session, skip: int = 0, limit: int = 100):
 
 
 def get_appointments_by_master_and_date(db: Session, master_id: int, target_date: date):
+    start = datetime.combine(target_date, time.min)
+    end = start + timedelta(days=1)
+
     return db.query(Appointment).filter(
         Appointment.master_id == master_id,
-        cast(Appointment.start_datetime, Date) == target_date,
-        Appointment.status != AppointmentStatus.cancelled 
+        Appointment.start_datetime >= start,
+        Appointment.start_datetime < end,
+        Appointment.status != AppointmentStatus.cancelled,
     ).all()
 
 

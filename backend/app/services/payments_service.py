@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.crud import crud_appointment
 from app.schemas.appointments import AppointmentStatus
 from app.api.worker import send_telegram_task
-from app.services.appointment_service import active_timers
+
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
@@ -79,9 +79,10 @@ async def stripe_webhook(request: Request, db: Session):
     
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
+        metadata = session.get("metadata")
 
-        if session.metadata:
-            appointment_id_str = session.metadata.appointment_id
+        if metadata:
+            appointment_id_str = metadata["appointment_id"]
             appointment_id = int(appointment_id_str)
             appointment = crud_appointment.get_appointment_by_id(db, appointment_id=appointment_id)
 
@@ -93,9 +94,6 @@ async def stripe_webhook(request: Request, db: Session):
                     appointment.status = AppointmentStatus.confirmed
                     appointment.stripe_payment_id = payment_intent_id
                     db.commit()
-
-                    if appointment_id in active_timers:
-                        active_timers[appointment_id].set()
 
                     cancel_url = f"http://localhost:8000/booking/cancel/{appointment.cancel_token}"
 

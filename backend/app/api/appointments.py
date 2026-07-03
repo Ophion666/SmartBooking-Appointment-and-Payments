@@ -1,20 +1,17 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas import appointments
 from app.services import appointment_service
+from app.api.worker import cancel_unpaid_task
 
 router = APIRouter(prefix="/appointments", tags=["Appointment"])
 
 
 @router.post("/appointment", response_model=appointments.AppointmentResponse)
-def post_create_appointment(appoint: appointments.AppointmentCreate,background_task: BackgroundTasks, db: Session = Depends(get_db)):
+def post_create_appointment(appoint: appointments.AppointmentCreate, db: Session = Depends(get_db)):
     new_appoint = appointment_service.create_new_appointment(db=db, appoint=appoint)
-
-    background_task.add_task(
-        appointment_service.cancel_unpaid_appointment_task,appointment_id = new_appoint.id
-    )
-
+    cancel_unpaid_task.apply_async(args=[new_appoint.id], PAYMENT_TIMEOUT_SECONDS = 600) 
     return new_appoint
 
 @router.post("/cancel/{appointment_id}")

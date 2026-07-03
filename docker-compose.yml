@@ -34,6 +34,16 @@ services:
       - db
       - redis
 
+  worker:
+    build: .
+    container_name: smart_booking_worker
+    command: celery -A app.api.worker worker --loglevel=info
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+
   
   stripe-cli:
     image: stripe/stripe-cli
