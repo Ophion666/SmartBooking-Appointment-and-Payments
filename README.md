@@ -354,7 +354,7 @@ Although the application is fully functional, there are several features that co
 
 ---
 
-# What I Learned
+# Technical Experience
 
 This project gave me practical experience with:
 
