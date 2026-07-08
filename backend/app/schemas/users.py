@@ -19,3 +19,7 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class UserShort(BaseModel):
+    id: int
+    name: str

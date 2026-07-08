@@ -1,6 +1,9 @@
 from enum import Enum
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+from app.schemas.users import UserShort
+from app.schemas.masters import MasterShort
+from app.schemas.services import ServiceShort
 
 class AppointmentStatus(str, Enum):
     pending_payment = "pending_payment"
@@ -25,5 +28,15 @@ class AppointmentResponse(BaseModel):
     cancel_token: str
     start_datetime: datetime
     status: AppointmentStatus
+
+    model_config = ConfigDict(from_attributes=True)
+
+class AppointmentDetailsResponse(BaseModel):
+    id: int
+    user: UserShort
+    master: MasterShort
+    service: ServiceShort
+    status: AppointmentStatus
+    start_datetime: datetime
 
     model_config = ConfigDict(from_attributes=True)

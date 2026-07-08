@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.models.appointments import Appointment
 from app.schemas.appointments import AppointmentStatus
 from datetime import date
@@ -40,3 +40,10 @@ def get_master_appointments(db: Session, master_id: int):
 
 def get_user_appointment(db: Session, user_id: int):
     return db.query(Appointment).filter(Appointment.user_id == user_id).all()
+
+def get_details_appointment(db: Session, appointment_id: int):
+    return db.query(Appointment).filter(Appointment.id == appointment_id).options(
+        joinedload(Appointment.user),
+        joinedload(Appointment.master),
+        joinedload(Appointment.service),
+    ).first()

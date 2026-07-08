@@ -22,3 +22,8 @@ class MasterResponse(BaseModel):
     phone: str
     services: list[ServiceShortInfo] = [] 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MasterShort(BaseModel):
+    id: int
+    name: str
