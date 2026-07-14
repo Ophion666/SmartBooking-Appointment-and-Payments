@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from app.crud import crud_appointment
 from app.schemas.appointments import AppointmentStatus
 from app.api.worker import send_telegram_task
+from app.api.worker import send_rating_request_task
+from datetime import timedelta
 
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -79,7 +81,7 @@ async def stripe_webhook(request: Request, db: Session):
     
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
-        metadata = session.get("metadata")
+        metadata = getattr(session, "metadata", None)
 
         if metadata:
             appointment_id_str = metadata["appointment_id"]
@@ -103,6 +105,9 @@ async def stripe_webhook(request: Request, db: Session):
                         f"<b>Url for cancel</b>\n{cancel_url}"
                     )
                     send_telegram_task.delay(text)
+
+                    eta = appointment.start_datetime + timedelta(minutes=appointment.service.duration_minutes) - timedelta(hours=3)
+                    send_rating_request_task.apply_async(args=[appointment_id], eta=eta)
 
                 elif appointment.status == AppointmentStatus.cancelled:
                     

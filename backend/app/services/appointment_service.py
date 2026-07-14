@@ -1,12 +1,13 @@
 import math
-from datetime import timedelta
+from datetime import timedelta, datetime
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from app.crud import crud_appointment, crud_service, crud_user, crud_master
+from app.crud import crud_appointment, crud_service, crud_user, crud_master, crud_schedule
 from app.schemas.appointments import AppointmentCreate, AppointmentStatus
 from app.schemas.users import UserCreate
 import stripe
 from app.api.worker import send_telegram_task
+from app.schemas.schedule import DayOfWeek
 
 
 def create_new_appointment(db: Session, appoint: AppointmentCreate):
@@ -17,8 +18,20 @@ def create_new_appointment(db: Session, appoint: AppointmentCreate):
         user = crud_user.create_user(db, user=new_user_data)
 
     user_id = user.id
+    target_date = appoint.start_datetime.date()
+    days_map = {
+        0: DayOfWeek.Monday,
+        1: DayOfWeek.Tuesday,
+        2: DayOfWeek.Wednesday,
+        3: DayOfWeek.Thursday,
+        4: DayOfWeek.Friday,
+        5: DayOfWeek.Saturday,
+        6: DayOfWeek.Sunday
+    }
+    day_enum = days_map[target_date.weekday()]
 
     service = crud_service.get_service_by_id(db, service_id=appoint.service_id)
+    schedule = crud_schedule.get_schedule_by_master_and_day(db, master_id=appoint.master_id, day_of_week= day_enum)
 
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
@@ -30,8 +43,16 @@ def create_new_appointment(db: Session, appoint: AppointmentCreate):
 
     if not service in master.services:
         raise HTTPException(status_code=400, detail="Mater doesn't do it")
-
     
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+
+    if datetime.now() > appoint.start_datetime:
+        raise HTTPException(status_code=400, detail="Incorect time")
+    
+    if  appoint.start_datetime.time() > schedule.end_time:
+        raise HTTPException(status_code=400, detail="Incorect time")
+
     if service.is_active == False:
         raise HTTPException(status_code=404, detail="Service not found")
     
@@ -44,7 +65,6 @@ def create_new_appointment(db: Session, appoint: AppointmentCreate):
         time_str = (appoint.start_datetime + timedelta(minutes=30 * i)).strftime("%H:%M")
         requested_slots.add(time_str)
 
-    target_date = appoint.start_datetime.date()
     existing_appts = crud_appointment.get_appointments_by_master_and_date(db, appoint.master_id, target_date)
 
     booked_slots = set()

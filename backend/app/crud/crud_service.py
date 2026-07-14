@@ -9,7 +9,7 @@ def create_service(db: Session, service: ServiceCreate):
     db.refresh(db_service)
     return db_service
 
-def get_service_by_name(db: Session, name: int):
+def get_service_by_name(db: Session, name: str):
     return db.query(Service).filter(Service.name == name).first()
 
 def get_all_services(db: Session, skip: int = 0, limit: int = 100):

@@ -27,3 +27,5 @@ class MasterResponse(BaseModel):
 class MasterShort(BaseModel):
     id: int
     name: str
+    rating_avg: float | None = None
+    rating_count: int
