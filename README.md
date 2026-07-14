@@ -132,6 +132,27 @@ This approach guarantees data consistency even if the customer closes the browse
 
 ---
 
+## Post-Appointment Rating System
+
+Implemented a post-appointment rating workflow that schedules feedback requests automatically after completed services while ensuring one-time submissions and reliable rating aggregation.
+
+Timing. A Celery task is scheduled at appointment creation time using eta, calculated as start_datetime + service duration, so the rating request fires exactly when the appointment ends — not on a polling cron job.
+
+Data integrity. Ratings are split across two tables instead of one:
+
+
+rating_requests — a temporary, single-use invitation (token, expiration, used flag) created by the background task.
+ratings — only real, submitted scores.
+
+
+Keeping them separate means the ratings table never contains "pending" or unused rows, so aggregate queries (AVG, COUNT) are always accurate without needing to filter out placeholder data.
+
+Abuse prevention. The rating link uses an unguessable, single-use, time-limited token rather than a predictable appointment ID, and a unique constraint on appointment_id guarantees at most one rating per visit at the database level — not just in application logic.
+
+On each new rating, the barber's average score is recalculated directly from the ratings table (AVG/COUNT) rather than updated incrementally, avoiding floating-point drift over time.
+
+---
+
 ## Background Processing
 
 Time-dependent operations are executed asynchronously using Celery and Redis.
