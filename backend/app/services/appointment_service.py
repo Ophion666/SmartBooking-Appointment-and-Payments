@@ -52,6 +52,12 @@ def create_new_appointment(db: Session, appoint: AppointmentCreate):
     
     if  appoint.start_datetime.time() > schedule.end_time:
         raise HTTPException(status_code=400, detail="Incorect time")
+    
+    if appoint.start_datetime.time() < schedule.start_time:
+        raise HTTPException(status_code=400, detail="Incorect time")
+
+    if appoint.start_datetime.minute % 30 != 0:
+        raise HTTPException(status_code=400, detail="Incorect time")
 
     if service.is_active == False:
         raise HTTPException(status_code=404, detail="Service not found")
