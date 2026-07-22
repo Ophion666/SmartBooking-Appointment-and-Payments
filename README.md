@@ -132,6 +132,19 @@ This approach guarantees data consistency even if the customer closes the browse
 
 ---
 
+## Real-Time Slot Availability
+The challenge was keeping slot availability synchronized across multiple FastAPI and Celery processes while ensuring clients received updates instantly without unnecessary traffic.
+
+Clients viewing a booking page receive real-time updates whenever a time slot becomes unavailable or available again, without polling the server.
+
+WebSocket connections grouped by room. Each client connects to `/ws/slots/{master_id}/{date}`. A ConnectionManager keeps an in-memory registry of active WebSocket connections grouped into rooms identified by master_id and date, ensuring broadcasts reach only clients viewing the affected schedule.
+
+Cross-process signaling via Redis Pub/Sub. Slot state changes originate from two independent processes: the FastAPI app (on appointment creation or manual cancellation) and the Celery worker (on automatic expiration of unpaid reservations). These processes don't share memory, so a Celery task can't call into the FastAPI process's ConnectionManager directly. Instead, every write path publishes a small event to a Redis channel; a background listener task running inside FastAPI's lifespan subscribes to that channel and forwards matching events to the right room. This keeps both processes decoupled — neither needs to know the other exists — while still delivering updates in real time.
+
+Server pushes a signal, not the data. WebSocket messages only say "this room changed" rather than carrying the new slot list. Clients react by re-fetching /available-slots through the existing REST endpoint, so the slot-calculation logic stays in one place instead of being duplicated between the HTTP and WebSocket layers.
+
+---
+
 ## Post-Appointment Rating System
 
 Implemented a post-appointment rating workflow that schedules feedback requests automatically after completed services while ensuring one-time submissions and reliable rating aggregation.
