@@ -8,9 +8,9 @@ from app.schemas.users import UserCreate
 import stripe
 from app.api.worker import send_telegram_task
 from app.schemas.schedule import DayOfWeek
+from app.core.connection_manager import manager
 
-
-def create_new_appointment(db: Session, appoint: AppointmentCreate):
+async def create_new_appointment(db: Session, appoint: AppointmentCreate):
 
     user = crud_user.get_user_by_phone(db, phone = appoint.user_phone)
     if not user:
@@ -97,17 +97,20 @@ def create_new_appointment(db: Session, appoint: AppointmentCreate):
 
     db.add(db_appoint)
     db.commit()
+    room = f"{appoint.master_id}_{target_date}"
+    await manager.broadcast(room, "slots_updated")
     db.refresh(db_appoint)
 
     return db_appoint
 
 
-def cancel_appointment(db: Session, token: str):
+async def cancel_appointment(db: Session, token: str):
     found_appoint = crud_appointment.get_appoint_by_token(db, token=token)
 
     if not found_appoint:
         raise HTTPException(404, "Invalid token or appointment not found")
-    
+    target_date = found_appoint.start_datetime.date()
+
     if found_appoint.status == "cancelled":
         raise HTTPException(400, "Appointment already cancel")
     
@@ -122,6 +125,8 @@ def cancel_appointment(db: Session, token: str):
     found_appoint.status = AppointmentStatus.cancelled
 
     db.commit()
+    room = f"{found_appoint.master_id}_{target_date}"
+    await manager.broadcast(room, "slots_updated")
     db.refresh(found_appoint)
 
     text = f"<b>Canceling appointment</b>\n User cancelled appointment {found_appoint.id} by url"
@@ -129,18 +134,20 @@ def cancel_appointment(db: Session, token: str):
 
     return found_appoint
 
-def cancel_appointment_admin(db: Session, appointment_id: str):
+async def cancel_appointment_admin(db: Session, appointment_id: str):
     found_appoint = crud_appointment.get_appointment_by_id(db, appointment_id=appointment_id)
-
+    
     if not found_appoint:
         raise HTTPException(404, "Invalid token or appointment not found")
-    
+    target_date = found_appoint.start_datetime.date()
     if found_appoint.status == "cancelled":
         raise HTTPException(400, "Appointment already cancel")
     
     found_appoint.status = AppointmentStatus.cancelled
 
     db.commit()
+    room = f"{found_appoint.master_id}_{target_date}"
+    await manager.broadcast(room, "slots_updated")
     db.refresh(found_appoint)
     return found_appoint
 

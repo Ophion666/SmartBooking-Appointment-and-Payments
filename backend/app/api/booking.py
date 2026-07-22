@@ -14,8 +14,8 @@ def available_slots(master_id: int,service_id: int , target_date: date, db: Sess
     
 
 @router.post("/cancel/{token}")
-def cancel_appointment_endpoint(token: str, db: Session = Depends(get_db)):
-    return appointment_service.cancel_appointment(db=db, token=token)
+async def cancel_appointment_endpoint(token: str, db: Session = Depends(get_db)):
+    return await appointment_service.cancel_appointment(db=db, token=token)
 
 
 

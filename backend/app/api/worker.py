@@ -5,6 +5,8 @@ from app.services.telegram_service import send_telegram_message
 from app.db.session import SessionLocal
 from app.models.appointments import Appointment, AppointmentStatus
 from app.crud import crud_rating, crud_appointment
+import redis
+import json
 
 load_dotenv()
 
@@ -16,6 +18,7 @@ celery_app = Celery(
     backend=REDIS_URL
 )
 
+redis_client = redis.Redis.from_url(REDIS_URL)
 
 @celery_app.task(name="send_telegrame_notification")
 def send_telegram_task (text: str):
@@ -33,8 +36,11 @@ def cancel_unpaid_task(appointment_id: int):
         appt = db.query(Appointment).filter(Appointment.id == appointment_id).first()
 
         if appt and appt.status == AppointmentStatus.pending_payment:
+            target_date = appt.start_datetime.date()
             appt.status = AppointmentStatus.cancelled
             db.commit()
+            room = f"{appt.master_id}_{target_date}"
+            redis_client.publish("slots_updates",json.dumps({"room": room, "message": "slots_updated"}))
             text = (
                 f"<b>TIMEOUT OR PAYMENT AFTER TIMEOUT</b>\n"
                 f"appointment #{appointment_id} cancelled, payment refunded"

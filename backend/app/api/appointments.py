@@ -12,14 +12,14 @@ router = APIRouter(prefix="/appointments", tags=["Appointment"])
 
 
 @router.post("/appointment", response_model=appointments.AppointmentResponse)
-def post_create_appointment(appoint: appointments.AppointmentCreate, db: Session = Depends(get_db)):
-    new_appoint = appointment_service.create_new_appointment(db=db, appoint=appoint)
-    cancel_unpaid_task.apply_async(args=[new_appoint.id], countdown = 600) 
-    return new_appoint
+async def post_create_appointment(appoint: appointments.AppointmentCreate, db: Session = Depends(get_db)):
+        new_appoint = await appointment_service.create_new_appointment(db=db, appoint=appoint)
+        cancel_unpaid_task.apply_async(args=[new_appoint.id], countdown = 600) 
+        return new_appoint
 
 @router.post("/cancel/{appointment_id}")
-def cancel_appointment_admin_endpoint(appointment_id: str, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
-    return appointment_service.cancel_appointment_admin(db=db, appointment_id=appointment_id)
+async def cancel_appointment_admin_endpoint(appointment_id: str, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
+    return await appointment_service.cancel_appointment_admin(db=db, appointment_id=appointment_id)
 
 @router.get("/appointment/{appointment_id}/details", response_model=appointments.AppointmentDetailsResponse)
 def get_appointment_detail_endpoin(appointment_id: int, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):

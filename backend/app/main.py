@@ -1,8 +1,19 @@
 from fastapi import FastAPI
-from app.api import users, masters, services, schedule, booking, appointments, admin, payments, rating
+from app.api import users, masters, services, schedule, booking, appointments, admin, payments, rating, websocet
+from contextlib import asynccontextmanager
+import asyncio
+from app.core.connection_manager import redis_listener
 
 
-app = FastAPI(title="SmartBooking API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(redis_listener())
+    yield
+    task.cancel()
+
+app = FastAPI(title="SmartBooking API", lifespan=lifespan)
+
 app.include_router(users.router)
 app.include_router(masters.router)
 app.include_router(services.router)
@@ -12,3 +23,4 @@ app.include_router(appointments.router)
 app.include_router(admin.router)
 app.include_router(payments.router)
 app.include_router(rating.router)
+app.include_router(websocet.router)
