@@ -15,24 +15,26 @@ def post_create_master(master: masters.MasterCreate, db: Session = Depends(get_d
     db_master = crud_master.get_master_by_phone(db, phone = master.phone)
     if db_master:
         raise HTTPException(status_code=400, detail="Master already registered")
-    return crud_master.create_master(db=db, master=master)
+    create = crud_master.create_master(db=db, master=master)
+    master_service.invalidate_masters_cache()
+    return create
 
 @router.get("/masters", response_model=list[masters.MasterResponse])
 def get_masters (db: Session = Depends(get_db)):
-    return crud_master.get_all_masters(db = db)
+    return master_service.get_masters_cached(db = db)
 
 
 @router.post("/{master_id}/add_service/{service_id}")
 def post_add_service_to_master (master_id: int, service_id: int, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
-    return master_service.assign_service_to_master(db = db, master_id=master_id, service_id=service_id, current_admin=current_admin)
+    return master_service.assign_service_to_master(db = db, master_id=master_id, service_id=service_id)
 
 @router.delete("/{master_id}")
 def deactivate_master_endpoint(master_id: int, db : Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
-    return master_service.deactivate_masters(db=db, master_id=master_id, current_admin=current_admin)
+    return master_service.deactivate_masters(db=db, master_id=master_id)
 
 @router.put("/{master_id}")
 def activate_master_endpoint(master_id: int, db : Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
-    return master_service.activate_masters(db=db, master_id=master_id, current_admin=current_admin)
+    return master_service.activate_masters(db=db, master_id=master_id)
 
 @router.get("/masters/{master_id}/appointments")
 def get_master_appointment_endpoint(master_id: int, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):

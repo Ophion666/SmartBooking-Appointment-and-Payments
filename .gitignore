@@ -2,7 +2,7 @@ backend/.venv/
 __pycache__/
 .pytest_cache/
 *.pyc
-backend/.env
+.env
 backend/stripe.exe
 .DS_Store
 Thumbs.db

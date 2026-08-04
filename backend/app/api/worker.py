@@ -1,16 +1,12 @@
-import os
+
 from celery import Celery
 from dotenv import load_dotenv
 from app.services.telegram_service import send_telegram_message
 from app.db.session import SessionLocal
 from app.models.appointments import Appointment, AppointmentStatus
 from app.crud import crud_rating, crud_appointment
-import redis
 import json
-
-load_dotenv()
-
-REDIS_URL = os.getenv("REDIS_URL")
+from app.core.redis_client import redis_client, REDIS_URL
 
 celery_app = Celery(
     "smart_booking",
@@ -18,7 +14,6 @@ celery_app = Celery(
     backend=REDIS_URL
 )
 
-redis_client = redis.Redis.from_url(REDIS_URL)
 
 @celery_app.task(name="send_telegrame_notification")
 def send_telegram_task (text: str):

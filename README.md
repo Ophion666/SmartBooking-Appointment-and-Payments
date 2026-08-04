@@ -145,6 +145,15 @@ Server pushes a signal, not the data. WebSocket messages only say "this room cha
 
 ---
 
+## Catalog Caching (Redis)
+
+Service and master listings are read far more often than they change, making them a good fit for caching — unlike live slot availability, which is already pushed to clients in real time via WebSocket and would gain nothing from an extra cache layer.
+
+Cache-aside pattern. On GET /service/services and GET /master/masters, the service layer first checks Redis (services:all / masters:all). On a cache miss, it falls back to PostgreSQL, serializes the result through the existing Pydantic response schemas, and stores it in Redis with a 1-hour TTL. Subsequent reads are served directly from Redis without touching the database.
+
+Explicit invalidation on write. Every endpoint that mutates a service or master (create, activate, deactivate, assigning a service to a master) deletes the corresponding cache key right after the database commit succeeds. The TTL acts only as a safety net for any write path that might be missed, not as the primary consistency mechanism.
+
+---
 ## Post-Appointment Rating System
 
 Implemented a post-appointment rating workflow that schedules feedback requests automatically after completed services while ensuring one-time submissions and reliable rating aggregation.
