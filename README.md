@@ -391,7 +391,6 @@ Although the application is fully functional, there are several features that co
 - appointment rescheduling;
 - multiple barber shop branches;
 - analytics dashboard;
-- Redis response caching;
 
 ---
 
